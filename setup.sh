@@ -24,9 +24,11 @@ prepare_system() {
 
   echo Create User
   if ! id kiosk &> /dev/null; then
-    useradd kiosk -p!  
+    useradd -m -s /bin/bash kiosk -p!
   fi
 
+  # Add kiosk user to necessary groups
+  usermod -aG render,video kiosk
   # usermod -aG netdev kiosk
 }
 
@@ -35,6 +37,8 @@ install_network_manager() {
   apt-get install network-manager -yy -qq
   apt-get purge openresolv dhcpcd5 -yy -qq
 
+  # create a polkit rule to allow the kiosk user to manage network connections
+  install -d -m 0755 /etc/polkit-1/localauthority/50-local.d
   # grant the kiosk user permissions to modify wifi networks.
   cat > /etc/polkit-1/localauthority/50-local.d/networkmanager.pkla << EOF
 [NetworkManager Permissions]
@@ -42,7 +46,7 @@ Identity=unix-group:kiosk
 Action=org.freedesktop.NetworkManager.settings.modify.system;org.freedesktop.NetworkManager.network-control;org.freedesktop.NetworkManager.settings.modify.own;org.freedesktop.NetworkManager.enable-disable-wifi;org.freedesktop.NetworkManager.wifi.share.open;org.freedesktop.NetworkManager.wifi.share.protected
 ResultAny=yes
 ResultInactive=yes
-ResultActive=yes  
+ResultActive=yes
 EOF
 }
 
@@ -111,10 +115,11 @@ install_browser() {
 
   if ! id "kiosk" &>/dev/null; then
     # Create the user 'kiosk' if it doesn't exist
-    useradd -m kiosk
+    useradd -m -s /bin/bash kiosk -p!
   fi
 
-  apt-get install chromium-browser -yy -qq
+  apt-get install chromium -yy -qq
+  apt-get install chromium-driver -yy -qq
 
   cat > /etc/kiosk/browser.conf << EOF
 KIOSK_HOME=https://www.example.com/
@@ -132,11 +137,11 @@ User=kiosk
 EnvironmentFile=/etc/kiosk/browser.conf
 Environment=DISPLAY=:0
 
-# In case chromium crashed it may have endup with an open session. 
+# In case chromium crashed it may have endup with an open session.
 # Which prevents chromium from starting.
 ExecStartPre=/bin/bash -c "rm -rf ~/.config/chromium/Singleton*"
 
-ExecStart=/bin/bash -c "/usr/bin/chromium-browser --hide-scrollbars --high-dpi-support=1 --force-device-scale-factor=\$KIOSK_SCALE_FACTOR --enable-offline-auto-reload --kiosk --incognito --window-position=0,0 \$KIOSK_HOME"
+ExecStart=/bin/bash -c "/usr/bin/chromium --hide-scrollbars --high-dpi-support=1 --force-device-scale-factor=\$KIOSK_SCALE_FACTOR --enable-offline-auto-reload --kiosk --incognito --window-position=0,0 \$KIOSK_HOME"
 
 [Install]
 WantedBy=multi-user.target
