@@ -284,6 +284,16 @@
                                     </div>
                                     <label class="col-sm-3 col-form-label form-label">Degrees</label>
                                 </div>
+                                <div class="row mt-3">
+                                    <label for="kiosk-screen-touch" class="col-sm-3 col-form-label">Touch:</label>
+                                    <div class="col-sm-6">
+                                        <select class="form-select" id="kiosk-screen-touch">
+                                        </select>
+                                        <div id="warning-touch-no-calibration" class="form-text text-danger d-none">
+                                            No touch has been found.
+                                        </div>
+                                    </div>
+                                </div>
                                 <div class="text-end mt-3">
                                     <button type="button" id="kiosk-screen-off" class="btn btn-outline-secondary">Turn Off Monitor</button>
                                     <button type="button" id="kiosk-screen-on" class="btn btn-outline-secondary">Turn On Monitor</button>                                        
@@ -294,7 +304,7 @@
 
                                 <h3>Preview</h3>
                                 <div class="mb-3 position-relative">
-                                    <img id="kiosk-screenshot" class=" mx-auto d-block img-thumbnail shadow">
+                                    <img id="kiosk-screenshot" src="" class=" mx-auto d-block img-thumbnail shadow">
                                     <div id="kiosk-screenshot-loading" class="position-absolute top-50 start-50 translate-middle d-none">
                                         <div class="spinner-border text-primary" role="status">
                                             <span class="visually-hidden">Loading...</span>
@@ -345,7 +355,7 @@
                                         <p>The sensor needs some time to warmup before it delivers reliable data..</p>
 
                                         <p>Connect the sensor as displayed to 5V, GND and Input.</p>
-                                        <img src="resources/pi-gpio.svg" class="img-thumbnail">
+                                        <img src="resources/pi-gpio.svg" class="img-thumbnail" alt="Raspberry Pi GPIO Layout">
 
 
                                     </div>
@@ -469,7 +479,7 @@
                                 </div>
 
                                 <div class="mb-3 row">
-                                    <label for="kiosk-cert-password" class="col-sm-3 col-form-label form-label">Password (Optional):</label>
+                                    <label for="kiosk-cert-kiosk" class="col-sm-3 col-form-label form-label">Password (Optional):</label>
                                     <div class="col-sm-9">
                                         <input type="password" class="form-control" id="kiosk-cert-kiosk">
                                     </div>

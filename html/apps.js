@@ -12,7 +12,7 @@ class ScheduleDialog {
 
             const elm = document.getElementById('kiosk-schedule-dialog');
             const modal = new bootstrap.Modal(elm);
-    
+
             function onSaveClick() {
                 document
                     .getElementById('kiosk-schedule-update')
@@ -20,13 +20,13 @@ class ScheduleDialog {
                 document
                     .getElementById('kiosk-schedule-dialog')
                     .removeEventListener('hidden.bs.modal', onModalClose);
-    
+
                 modal.hide();
-    
+
                 resolve(true);
             }
-    
-    
+
+
             function onModalClose() {
                 document
                     .getElementById('kiosk-schedule-update')
@@ -34,23 +34,23 @@ class ScheduleDialog {
                 document
                     .getElementById('kiosk-schedule-dialog')
                     .removeEventListener('hidden.bs.modal', onModalClose);
-    
+
                 resolve(false);
             }
-    
+
             // Attach event listeners
             document
-                .getElementById('kiosk-schedule-update')        
+                .getElementById('kiosk-schedule-update')
                 .addEventListener('click', onSaveClick);
             document
                 .getElementById('kiosk-schedule-dialog')
                 .addEventListener('hidden.bs.modal', onModalClose);
-    
+
             // Show the modal
             modal.show();
         });
-            
-    
+
+
     }
 
     setWeekday(weekday) {
@@ -61,7 +61,7 @@ class ScheduleDialog {
         document.getElementById("kiosk-schedule-weekday-friday").checked = false;
         document.getElementById("kiosk-schedule-weekday-saturday").checked = false;
         document.getElementById("kiosk-schedule-weekday-sunday").checked = false;
-    
+
         for (const item of weekday.split(",")) {
             if (item === "1")
                 document.getElementById("kiosk-schedule-weekday-monday").checked = true;
@@ -77,7 +77,7 @@ class ScheduleDialog {
                 document.getElementById("kiosk-schedule-weekday-saturday").checked = true;
             if (item === "0")
                 document.getElementById("kiosk-schedule-weekday-sunday").checked = true;
-    
+
             if (item === "*") {
                 document.getElementById("kiosk-schedule-weekday-monday").checked = true;
                 document.getElementById("kiosk-schedule-weekday-tuesday").checked = true;
@@ -85,9 +85,9 @@ class ScheduleDialog {
                 document.getElementById("kiosk-schedule-weekday-thursday").checked = true;
                 document.getElementById("kiosk-schedule-weekday-friday").checked = true;
                 document.getElementById("kiosk-schedule-weekday-saturday").checked = true;
-                document.getElementById("kiosk-schedule-weekday-sunday").checked = true;            
+                document.getElementById("kiosk-schedule-weekday-sunday").checked = true;
             }
-    
+
         }
     }
 
@@ -95,7 +95,7 @@ class ScheduleDialog {
         const result = []
 
         if (document.getElementById("kiosk-schedule-weekday-sunday").checked)
-            result.push("0")             
+            result.push("0")
         if (document.getElementById("kiosk-schedule-weekday-monday").checked)
             result.push("1")
         if (document.getElementById("kiosk-schedule-weekday-tuesday").checked)
@@ -107,21 +107,21 @@ class ScheduleDialog {
         if (document.getElementById("kiosk-schedule-weekday-friday").checked)
             result.push("5")
         if (document.getElementById("kiosk-schedule-weekday-saturday").checked)
-            result.push("6")                
-    
-    
+            result.push("6")
+
+
         if (result.length === 7)
             return "*";
         if (result.length === 0)
             return "*";
-    
+
         return result.join(",");
     }
 
     getItem(name) {
         if (document.getElementById(`kiosk-schedule-${name}-all`).checked)
             return "*";
-        
+
         return document.getElementById(`kiosk-schedule-${name}-list`).value;
     }
 
@@ -131,9 +131,9 @@ class ScheduleDialog {
             document.getElementById(`kiosk-schedule-${name}-list`).value = "";
             return;
         }
-        
+
         document.getElementById(`kiosk-schedule-${name}-some`).checked = true;
-        document.getElementById(`kiosk-schedule-${name}-list`).value = value;    
+        document.getElementById(`kiosk-schedule-${name}-list`).value = value;
     }
 
     setHour(hour) {
@@ -241,7 +241,7 @@ async function animatedBtnProgressHandler(id, callback) {
 }
 
 async function addProgressEventHandler(id, callback) {
-    
+
     const elm = document.getElementById(id);
 
     if (elm === null)
@@ -253,18 +253,18 @@ async function addProgressEventHandler(id, callback) {
 }
 
 async function loadScreenshot(ms) {
-    
+
     document.getElementById("kiosk-screenshot-loading").classList.remove("d-none");
 
     if (typeof(ms) !== "undefined" && ms !== null)
         await delay(ms);
 
 
-    const timestamp = new Date().getTime(); 
-    const random = Math.random().toString(36).substring(2, 15); 
+    const timestamp = new Date().getTime();
+    const random = Math.random().toString(36).substring(2, 15);
 
     const img = document.getElementById("kiosk-screenshot");
-    img.src = `./display/screenshot.png?${timestamp}-${random}`; 
+    img.src = `./display/screenshot.png?${timestamp}-${random}`;
 
     img.addEventListener("load", () => {
         document.getElementById("kiosk-screenshot-loading").classList.add("d-none");
@@ -280,7 +280,7 @@ async function loadBrowser() {
 
 async function saveBrowser() {
     // Schedule a screenshot in 10 sec, chrome starts very slow...
-    loadScreenshot(SEVEN_SECONDS);   
+    loadScreenshot(SEVEN_SECONDS);
 
     const data = {
         url : document.getElementById("kiosk-browser-url").value,
@@ -292,7 +292,7 @@ async function saveBrowser() {
     if (!response.ok)
         throw new Error(`An error occurred while updating browser settings.`);
 
-    await loadBrowser();    
+    await loadBrowser();
 }
 
 async function loadScreen(name, screen) {
@@ -344,12 +344,13 @@ async function loadScreens() {
 async function saveScreen() {
 
     // Schedule a screenshot in 10 sec, chrome starts very slow...
-    loadScreenshot(SEVEN_SECONDS);   
+    loadScreenshot(SEVEN_SECONDS);
 
     const primary = document.getElementById("kiosk-screen-primary").value;
 
     const data = {
         orientation : document.getElementById("kiosk-screen-orientation").value,
+        touch: document.getElementById("kiosk-screen-touch").value,
     };
 
     const response = await postJson("/display/screens/"+primary, data);
@@ -358,6 +359,28 @@ async function saveScreen() {
         throw new Error(`An error occurred while updating screen.`);
 
     await loadScreen(primary, await response.json());
+}
+
+async function loadTouchScreens() {
+    const touchScreens = await getJson("/display/touch");
+    const warningTouch = document.getElementById("warning-touch-no-calibration");
+    const touchSelect = document.getElementById("kiosk-screen-touch");
+    warningTouch.classList.add("d-none");
+    touchSelect.classList.remove("d-none");
+    console.log(touchScreens);
+
+    if (touchScreens === null || typeof(touchScreens) === "undefined" || touchScreens.length === 0) {
+        touchSelect.classList.add("d-none");
+        warningTouch.classList.remove("d-none");
+        return;
+    }
+    for (let touch of touchScreens) {
+        const option = document.createElement("option");
+        option.value = touch.name;
+        option.textContent = touch.name;
+        touchSelect.appendChild(option);
+    }
+
 }
 
 async function authenticate() {
@@ -401,7 +424,7 @@ async function login() {
 
     document.getElementById("kiosk-content").classList.remove("d-none")
     populate()
-};
+}
 
 /**
  * Saves the current password.
@@ -465,7 +488,7 @@ async function uploadCert() {
 
 
 function convertSchedule(minute, hour, day, month, weekday, action) {
-    
+
     let description = ""
 
     if (action === "off")
@@ -474,7 +497,7 @@ function convertSchedule(minute, hour, day, month, weekday, action) {
         description += "Turn on scree ";
     else if (action === "reboot")
         description += "Restart and turn on screen ";
-    else 
+    else
        description = "Run unknown action "
 
     if (hour === "*")
@@ -499,7 +522,7 @@ function convertSchedule(minute, hour, day, month, weekday, action) {
         weekday = weekday.split(",")
         const items = [];
         for (item of weekday) {
-            
+
             if (item == "0")
                 items.push("Sundays");
             if (item == "1")
@@ -550,7 +573,7 @@ async function editSchedule(elm) {
     elm.querySelector(".kiosk-schedule-weekday").textContent = weekday;
     elm.querySelector(".kiosk-schedule-action").textContent = action;
 
-    elm.querySelector(".kiosk-schedule-description").textContent 
+    elm.querySelector(".kiosk-schedule-description").textContent
         = convertSchedule(minute, hour, day, month, weekday, action);
 }
 
@@ -565,7 +588,7 @@ async function newSchedule() {
     dialog.setAction("off");
 
     if (!await dialog.show())
-        return;    
+        return;
 
     addSchedule(
         dialog.getMinute(),
@@ -579,7 +602,7 @@ async function newSchedule() {
 async function addSchedule(minute, hour, day, month, weekday, action) {
 
     const elm = document.getElementById("kiosk-schedule-template").content.cloneNode(true);
-    
+
     elm.querySelector(".kiosk-schedule-action").textContent = action;
     elm.querySelector(".kiosk-schedule-minute").textContent = minute;
     elm.querySelector(".kiosk-schedule-hour").textContent = hour;
@@ -587,7 +610,7 @@ async function addSchedule(minute, hour, day, month, weekday, action) {
     elm.querySelector(".kiosk-schedule-month").textContent = month;
     elm.querySelector(".kiosk-schedule-weekday").textContent = weekday;
 
-    elm.querySelector(".kiosk-schedule-description").textContent 
+    elm.querySelector(".kiosk-schedule-description").textContent
         = convertSchedule(minute, hour, day, month, weekday, action);
 
     const id = "kiosk-"
@@ -609,7 +632,7 @@ async function addSchedule(minute, hour, day, month, weekday, action) {
 async function loadSchedule() {
     const schedule = await getJson("/schedule");
 
-    for (const item of schedule) 
+    for (const item of schedule)
         addSchedule(item.minute, item.hour, item.day, item.month, item.weekday, item.action);
 }
 
@@ -652,16 +675,16 @@ async function awaitReboot() {
 
     const modal = new bootstrap.Modal('#kiosk-rebooting-modal');
     modal.show();
-    
-    await delay(SEVEN_SECONDS);    
 
-    for (let i=0; i<20; i++) {        
+    await delay(SEVEN_SECONDS);
+
+    for (let i=0; i<20; i++) {
         try {
 
             const response = await fetch("status");
-        
+
             if (response.ok) {
-                modal.hide();            
+                modal.hide();
                 return;
             }
         }
@@ -670,7 +693,7 @@ async function awaitReboot() {
         }
 
         await delay(SEVEN_SECONDS);
-    }    
+    }
 
     throw new Error("Failed to restart system");
 }
@@ -686,7 +709,7 @@ async function reboot() {
 async function loadSystem() {
     document.getElementById("kiosk-ssh-status").checked
          = (await getJson("ssh")).active;
-    document.getElementById("kiosk-hostname").value 
+    document.getElementById("kiosk-hostname").value
         = (await getJson("hostname")).hostname;
 }
 
@@ -701,7 +724,7 @@ async function loadNetwork() {
     for (item of data) {
 
         const elm = document.getElementById("kiosk-connections-template").content.cloneNode(true);
-        
+
         elm.querySelector(".kiosk-connection-ip4-address").textContent = item.ipv4.addresses.join(",");
         elm.querySelector(".kiosk-connection-ip6-address").textContent = item.ipv6.addresses.join(",");
 
@@ -709,7 +732,7 @@ async function loadNetwork() {
             elm.querySelector(".kiosk-connection-title").textContent = `Wifi - SSID ${item.ssid}`;
         else
             elm.querySelector(".kiosk-connection-title").textContent = "Ethernet";
-            
+
         const id = "kiosk-"
             + Math.random().toString(36).substring(2, 8).toUpperCase()
             + Date.now().toString(16).toUpperCase();
@@ -728,7 +751,7 @@ async function loadNetwork() {
 }
 
 async function addWifi() {
-    
+
     await postJson("connections", {
         "ssid" : document.getElementById("kiosk-wifi-ssid").value,
         "psk" : document.getElementById("kiosk-wifi-psk").value
@@ -752,7 +775,7 @@ async function saveMotionSensor() {
     const delay = document.getElementById("kiosk-motionsensor-delay").value;
     const enabled = document.getElementById("kiosk-motionsensor-status").checked
 
-    await postJson("motionsensor", { 
+    await postJson("motionsensor", {
         "delay" : delay,
         "enabled" : enabled
     });
@@ -774,6 +797,7 @@ async function populate() {
     loadScreenshot();
     loadBrowser();
     loadScreens();
+    loadTouchScreens();
     loadSchedule();
     loadSystem();
     loadNetwork();
@@ -788,7 +812,7 @@ async function populate() {
     });
 
     addProgressEventHandler("kiosk-screen-save", async() => {
-        await saveScreen();        
+        await saveScreen();
     });
 
     document.getElementById("kiosk-screen-primary").addEventListener("change", () => {
@@ -803,7 +827,7 @@ async function populate() {
     addProgressEventHandler('kiosk-screen-off', async() => {
         await fetch("/display/off");
         await loadScreenshot();
-    });        
+    });
 
     document.getElementById("kiosk-screenshot").addEventListener("click", () => {
         loadScreenshot();
@@ -814,7 +838,7 @@ async function populate() {
     })
 
     addProgressEventHandler('kiosk-password-save', async() => {
-        await savePassword();        
+        await savePassword();
     });
 
     addProgressEventHandler("kiosk-cert-generate", async () => {
@@ -841,7 +865,7 @@ async function populate() {
 
         if (!document.getElementById("kiosk-ssh-status").checked)
             await fetch("ssh/disable");
-        else 
+        else
             await fetch("ssh/enable");
 
         await awaitReboot();

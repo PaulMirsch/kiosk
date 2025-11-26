@@ -188,19 +188,69 @@ class Screen():
 
         (CONFIG_XINITRC_SCREENS / self.__name).chmod(0o775)
 
-    def enable(self, orientation:str  = None):
+    def enable(self, orientation: str = None, touch_device: str=None):
         """
-        Enables the screen.
+        Enables the screen and rotates touch accordingly.
         """
 
         if orientation is None:
             orientation = self.get_orientation()
 
+        # Mapping Orientation -> Coordinate Transformation Matrix
+        matrices = {
+            "normal":   "1 0 0  0 1 0  0 0 1",
+            "right":    "0 1 0  -1 0 1  0 0 1",
+            "inverted": "-1 0 1  0 -1 1  0 0 1",
+            "left":     "0 -1 1  1 0 0  0 0 1",
+        }
+
+        # Fallback
+        matrix = matrices.get(orientation, matrices["normal"])
+
+        TOUCH_DEVICE = touch_device
+
         with (CONFIG_XINITRC_SCREENS / self.__name).open("w+") as f:
             f.write("#!/bin/sh\n")
+            # Bildschirm drehen
             f.write(CMD_SET_SCREEN + f" {self.__name} --rotate {orientation} --primary\n")
+            if TOUCH_DEVICE is not None:
+                # Touchscreen orientation
+                f.write(f"TOUCH_DEVICE=\"{TOUCH_DEVICE}\"\n")
+                f.write("if xinput list | grep -q \"$TOUCH_DEVICE\"; then\n")
+                f.write(
+                    "  xinput set-prop \"$TOUCH_DEVICE\" "
+                    "'Coordinate Transformation Matrix' " + matrix + "\n"
+                )
+            f.write("fi\n")
 
         (CONFIG_XINITRC_SCREENS / self.__name).chmod(0o775)
+
+
+
+        def list_touch_devices():
+            """
+            Liefert eine Liste möglicher Touch-Geräte (Namen aus `xinput list`),
+            gefiltert nach 'touch'.
+            """
+            try:
+                out = subprocess.check_output(
+                    ["xinput", "--list"],
+                    text=True,
+                )
+            except subprocess.CalledProcessError:
+                return []
+
+            devices = []
+            for line in out.splitlines():
+                lower = line.lower()
+                if "touch" in lower:  # 'touchscreen', 'touch', etc.
+                    # Format: '⎜   ↳ USB Touchscreen                       	id=9   [slave  pointer  (2)]'
+                    name_part = line.split("\t")[0]
+                    name = name_part.replace("↳", "").strip()
+                    devices.append(name)
+
+            return devices
+
 
 class Browser:
     """
@@ -338,7 +388,7 @@ class Display:
 
         return Screen(name).load()
 
-    def set_screen(self, name:str, orientation:str):
+    def set_screen(self, name:str, orientation:str, touch:str = None):
         """
         Enables the given display and sets the orientation.
         """
@@ -354,7 +404,7 @@ class Display:
                 screen.disable()
                 continue
 
-            screen.enable(orientation)
+            screen.enable(orientation, touch)
 
         self.reload()
 

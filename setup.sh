@@ -53,7 +53,7 @@ EOF
 install_window_manager() {
   echo Installing Window Manager
 
-  apt-get install --no-install-recommends xserver-xorg xinit x11-xserver-utils -yy -qq
+  apt-get install --no-install-recommends xserver-xorg xinit x11-xserver-utils xinput -yy -qq
   apt-get install matchbox-window-manager -yy -qq
   apt-get install unclutter -yy -qq
 

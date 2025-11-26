@@ -4,6 +4,9 @@ Tha main application logic
 from pathlib import Path
 import mimetypes
 import time
+import subprocess
+import re
+import os
 
 from flask import Flask, request, jsonify, session, redirect, send_file, Response
 
@@ -133,12 +136,12 @@ class App:
 
     def on_set_screen(self, name:str):
         """
-        Sets the screen related configuration like the browser url, the scale 
+        Sets the screen related configuration like the browser url, the scale
         as well as the screen orientation.
         """
         data = request.json
 
-        self.__display.set_screen(name, data.pop("orientation"))
+        self.__display.set_screen(name, data.pop("orientation"), data.pop("touch"))
 
         # We are racing here against the window manager reload.
         # Thus we need to give it some time to negotiate the
@@ -146,6 +149,41 @@ class App:
         time.sleep(2)
 
         return self.on_get_screen(name)
+
+    def on_get_touch(self):
+        """
+        Returns all screens that are Touchscreens
+        """
+
+        # Basis-Environment übernehmen und DISPLAY setzen
+        env = os.environ.copy()
+        env.setdefault("DISPLAY", ":0")  # falls nicht vorhanden, auf :0 setzen
+        try:
+            out = subprocess.check_output(
+                ["xinput", "--list"],
+                text=True,
+                env=env,
+            )
+        except (subprocess.CalledProcessError, FileNotFoundError) as e:
+            return jsonify([])
+
+        devices = []
+        for line in out.splitlines():
+            lower = line.lower()
+            if "touch" in lower:
+                m = re.search(r'↳\s*(.+?)\s+id=', line)
+                if m:
+                    name = m.group(1).strip()
+                else:
+                    if "\t" in line:
+                        name_part = line.split("\t")[0]
+                        name = name_part.replace("↳", "").strip()
+                    else:
+                        name = line.replace("↳", "").strip()
+
+                devices.append({"name": name})
+
+        return jsonify(devices)
 
     # Certificate Endpoint related functions
     def on_set_cert(self):
@@ -221,7 +259,7 @@ class App:
     def on_reboot(self):
         """
         Triggers a restart.
-        We need to defer the restart by just enough time to return a 
+        We need to defer the restart by just enough time to return a
         success to the browser, otherwise it will be vary mad at us.
         """
         self.__system.reboot()
@@ -298,13 +336,13 @@ class App:
 
     def on_get_log_webservice(self):
         """
-        Returns the web service's log.      
+        Returns the web service's log.
         """
         return self.__config.get_log("kiosk-webservice")
 
     def on_get_log_browser(self):
         """
-        Returns the browser's log.      
+        Returns the browser's log.
         """
         return self.__config.get_log("kiosk-browser")
 
@@ -382,7 +420,7 @@ class App:
 
     def on_after_request(self, r):
         """
-        Called after the request is processed. 
+        Called after the request is processed.
         Used to inject the no proxy headers.
         """
 
@@ -400,7 +438,7 @@ class App:
 
     def on_get_resource(self, filename:str):
         """
-        Resources needed by the html content. 
+        Resources needed by the html content.
         """
         base = Path("./html/").resolve()
         target = (base / filename).resolve()
@@ -443,6 +481,8 @@ class App:
             '/display/screens/<name>',  view_func=self.on_get_screen, methods=['GET'])
         app.add_url_rule(
             '/display/screens/<name>',  view_func=self.on_set_screen, methods=['POST'])
+        app.add_url_rule(
+            '/display/touch/', view_func=self.on_get_touch, methods=['GET'])
 
         app.add_url_rule(
             '/browser',  view_func=self.on_get_browser, methods=['GET'])
